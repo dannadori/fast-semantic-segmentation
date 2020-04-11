@@ -27,6 +27,10 @@ _IMAGE_SCALE_KEY = 'IMAGE_SCALE_KEY'
 
 _IMAGE_HORIZONTAL_FLIP_KEY = 'IMAGE_HORIZONTAL_FLIP_STEP'
 
+_IMAGE_VERTICAL_FLIP_KEY = 'IMAGE_VERTICAL_FLIP_STEP'
+
+_IMAGE_ROTATION_KEY = 'IMAGE_ROTATION_STEP'
+
 _RANDOM_PREPROCESSOR_SEED = 7
 
 
@@ -267,6 +271,60 @@ def random_horizontal_flip(images,
         return flipped_images, flipped_labels
 
 
+
+def random_vertical_flip(images,
+                           labels,
+                           seed=_RANDOM_PREPROCESSOR_SEED,
+                           preprocess_vars_cache=None):
+
+    def _flip_image(item):
+        flipped_item = tf.image.flip_up_down(item)
+        return flipped_item
+
+    with tf.name_scope('RandomVerticalFlip', values=[images, labels]):
+        generator_func = functools.partial(
+            tf.random_uniform, [], seed=seed)
+        do_a_flip_random = _get_or_create_preprocess_rand_vars(
+            generator_func, _IMAGE_VERTICAL_FLIP_KEY,
+            preprocess_vars_cache)
+        do_a_flip_random = tf.greater(do_a_flip_random, 0.5)
+
+        flipped_images = tf.cond(do_a_flip_random,
+                                 lambda: _flip_image(images),
+                                 lambda: images)
+        flipped_labels = tf.cond(do_a_flip_random,
+                                 lambda: _flip_image(labels),
+                                 lambda: labels)
+        return flipped_images, flipped_labels
+
+
+
+def random_rotation(images,
+                           labels,
+                           seed=_RANDOM_PREPROCESSOR_SEED,
+                           preprocess_vars_cache=None):
+
+    def _rotate_image(item):
+        rotate_item = tf.image.rot90(item,k=1,name=None)
+        return rotate_item
+
+    with tf.name_scope('RandomRotation', values=[images, labels]):
+        generator_func = functools.partial(tf.random_uniform, [], seed=seed)
+        do_a_rotation_random = _get_or_create_preprocess_rand_vars(
+            generator_func, _IMAGE_ROTATION_KEY,
+            preprocess_vars_cache)
+        do_a_rotation_random = tf.greater(do_a_rotation_random, 0.5)
+
+        rotate_images = tf.cond(do_a_rotation_random,
+                                 lambda: _rotate_image(images),
+                                 lambda: images)
+        rotate_labels = tf.cond(do_a_rotation_random,
+                                 lambda: _rotate_image(labels),
+                                 lambda: labels)
+        return rotate_images, rotate_labels
+
+    
+    
 def preprocess_runner(tensor_dict, func_list,
                       skip_labels=False,
                       preprocess_vars_cache=None):
@@ -371,6 +429,16 @@ def build(preprocessor_config_list):
             image_horizontal_flip_fn = functools.partial(
                 random_horizontal_flip)
             proprocessor_func_list.append(image_horizontal_flip_fn)
+
+        if step_type == 'random_vertical_flip':
+            config = preprocessor_step_config.random_vertical_flip
+            image_vertical_flip_fn = functools.partial(random_vertical_flip)
+            proprocessor_func_list.append(image_vertical_flip_fn)
+
+        if step_type == 'random_rotation':
+            config = preprocessor_step_config.random_rotation
+            image_rotation_fn = functools.partial(random_rotation)
+            proprocessor_func_list.append(image_rotation_fn)
 
         if len(proprocessor_func_list) <= 0 and \
                 len(preprocessor_config_list) > 0:
