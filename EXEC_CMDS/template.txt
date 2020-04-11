@@ -24,7 +24,7 @@ python train_mem_saving.py \
        --config_path         $stage2_config \
        --logdir              STAGE2/$train_tag/log \
        --test_image_summaries \
-       --log_memory
+       --log_memory \
        --save_interval_secs 20
 
 python3 export.py \

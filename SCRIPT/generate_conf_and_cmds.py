@@ -23,7 +23,7 @@ parser.add_argument('--filter_scale',         default=0,     required=True,  typ
 if __name__ == '__main__':
     args = parser.parse_args()
     context = vars(args)
-    context['fine_tune_checkpoint'] = 'STAGE1/icnet_{args.crop_width:04d}x{args.crop_height:04d}_{args.filter_scale:02.2f}/comp/pruned_model.ckpt'
+    context['fine_tune_checkpoint'] = f'STAGE1/icnet_{args.crop_width:04d}x{args.crop_height:04d}_{args.filter_scale:02.2f}/comp/pruned_model.ckpt'
 
 
     DIR_FOR_1ST_STAGE = os.path.join('TRAIN_CONF','1st_stage')
@@ -40,6 +40,7 @@ if __name__ == '__main__':
     
     print(CONF_PATH_FOR_1ST_STAGE)
     print(CONF_PATH_FOR_2ND_STAGE)
+    print(CMD_PATH)
     
     # for 1st stage
     with open(os.path.join(DIR_FOR_1ST_STAGE, 'template.conf')) as f:
@@ -64,7 +65,7 @@ if __name__ == '__main__':
     context={
         'stage1_config': CONF_PATH_FOR_1ST_STAGE,
         'train_tag'    : f'icnet_{args.crop_width:04d}x{args.crop_height:04d}_{args.filter_scale:02.2f}',
-        'shape'        : f'-1,{args.crop_width}{args.crop_height},3',
+        'shape'        : f'-1,{args.crop_width},{args.crop_height},3',
         'num_steps'    : f'{args.num_steps}',
         'filter_scale' : f'{args.filter_scale}',
         'stage2_config': CONF_PATH_FOR_2ND_STAGE,
