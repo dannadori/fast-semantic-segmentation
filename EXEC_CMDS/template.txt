@@ -1,0 +1,41 @@
+
+### 1st stage
+python train_mem_saving.py \
+       --config_path         $stage1_config \
+       --logdir              STAGE1/$train_tag/log \
+       --test_image_summaries \
+       --log_memory \
+       --save_interval_secs  20
+
+python export.py \
+       --input_shape         $shape \
+       --config_path         $stage1_config \
+       --trained_checkpoint  STAGE1/$train_tag/log/model.ckpt-$num_steps \
+       --output_dir          STAGE1/$train_tag/pb
+
+python compress.py \
+       --prune_config        TRAIN_CONF/compress/icnet_resnet_v1_pruner_v2.prune_config \
+       --input_checkpoint    STAGE1/$train_tag/pb/model.ckpt \
+       --output_dir          STAGE1/$train_tag/comp \
+       --compression_factor  $filter_scale
+
+### 2nd stage
+python train_mem_saving.py \
+       --config_path         $stage2_config \
+       --logdir              STAGE2/$train_tag/log \
+       --test_image_summaries \
+       --log_memory
+       --save_interval_secs 20
+
+python3 export.py \
+	--input_shape $shape \
+	--config_path        $stage2_config \
+	--trained_checkpoint STAGE2/$train_tag/log/model.ckpt-$num_steps \
+	--output_dir         STAGE2/$train_tag/pb/
+
+### Tensorflowjs
+tensorflowjs_converter \
+	--input_format=tf_frozen_model \
+	--output_node_names='predictions' \
+	STAGE2/$train_tag/pb/frozen_inference_graph.pb \
+	WEB_MODEL/$train_tag
