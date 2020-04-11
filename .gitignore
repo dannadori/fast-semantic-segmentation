@@ -7,3 +7,4 @@ node_modules
 __pycache__
 tmp
 protos/*_pb2.py
+*~
